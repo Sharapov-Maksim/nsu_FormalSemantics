@@ -15,7 +15,7 @@
 (psm-type class class_decl * ((name name) (body (class_member_decl))))
 (psm-utype class_member_decl * constructor_def method_def)
 (psm-type constructor constructor_def * (args (list name)) (body (list statement)))
-(psm-type method method_def * (args (list name)) (body (list statement)))
+(psm-type method method_def * (name name) (args (list name)) (body (list statement)))
 
 
 
@@ -41,6 +41,8 @@
 (psm-type != inequality * (left expression) (right expression))
 ; выражение чтения из свойства:
 (psm-type accr property-access-read * (object expression) (path (list expression)))
+; вызов метода
+(psm-type accw property-access-call * (object property-access-read) (args (list expression)))
 
 
 ; Типы моделей операторов языка
@@ -52,10 +54,8 @@
 (psm-type set variable-assignment * (variable variable) (expression arithmetic-expresssion))
 ; оператор присваивания значения в свойство:
 (psm-type accw property-access-write * (object expression) (path (list expression)) (value expression))
-; вызов метода
-(psm-type accw property-access-call * (object property-access-read) (name name) (args (list expression)))
 
 
-(psm-type program program * (name symbol) (body (list statement)))
+(psm-type program program * (body (list statement)))
 
 
