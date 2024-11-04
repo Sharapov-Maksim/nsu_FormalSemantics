@@ -31,6 +31,33 @@
     global_stmt
     nonlocal_stmt
 )
+(umodel compound_statement
+    function_def
+    if_stmt
+    class_def
+    with_stmt
+    for_stmt
+    try_stmt
+    while_stmt
+    match_stmt
+)
+
+;; SIMPLE STATEMENTS
+;; =================
+
+(umodel assignment 
+    simple_assignment
+    augment_assignment
+)
+
+(model simple_assignment :constructor = :arguments
+    single_target
+    expression
+)
+(umodel single_target
+    variable
+    single_subscript_attribute_target
+)
 
 (psm-atype variable (lisp symbol)) ; Определяем типы моделей лексических конструкций языка
 
