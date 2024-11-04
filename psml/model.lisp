@@ -51,12 +51,12 @@
 )
 
 (model simple_assignment :constructor = :arguments
-    single_target
+    assignment_target
     expression
 )
-(umodel single_target
+(umodel assignment_target
     variable
-    single_subscript_attribute_target
+    subscript_attribute_target
 )
 
 (psm-atype variable (lisp symbol)) ; Определяем типы моделей лексических конструкций языка
