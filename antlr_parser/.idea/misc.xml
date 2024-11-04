@@ -26,7 +26,7 @@
         <PerGrammarGenerationSettings>
           <option name="fileName" value="$PROJECT_DIR$/Python3Parser.g4" />
           <option name="autoGen" value="true" />
-          <option name="outputDir" value="C:\projects\nsu_FormalSemantics\nsu_FormalSemantics\antlr_parser\antlr_parser\src\main\java" />
+          <option name="outputDir" value="C:\projects\nsu_FormalSemantics\nsu_FormalSemantics\antlr_parser\src\main\java" />
           <option name="libDir" value="" />
           <option name="encoding" value="" />
           <option name="pkg" value="nsu.mmf.formalsemantics.antlr" />
@@ -36,7 +36,7 @@
         <PerGrammarGenerationSettings>
           <option name="fileName" value="$PROJECT_DIR$/Python3Lexer.g4" />
           <option name="autoGen" value="true" />
-          <option name="outputDir" value="C:\projects\nsu_FormalSemantics\nsu_FormalSemantics\antlr_parser\antlr_parser\src\main\java" />
+          <option name="outputDir" value="C:\projects\nsu_FormalSemantics\nsu_FormalSemantics\antlr_parser\src\main\java" />
           <option name="libDir" value="" />
           <option name="encoding" value="" />
           <option name="pkg" value="nsu.mmf.formalsemantics.antlr" />
