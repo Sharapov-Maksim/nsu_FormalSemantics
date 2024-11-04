@@ -5,6 +5,33 @@
 (psm-lan Python) ; Добавляем язык моделей Python-конструкций
 (psm-clan Python) ; Делаем его текущим языком
 
+(model program :constructor program :arguments 
+    (body (list statement)) ; list can be empty
+) ; file_input in g4
+
+
+(umodel statement simple_statements compound_statement)
+
+(model simple_statements :constructor simple_stmts :arguments
+    (stmts  (list simple_statement))
+)
+(umodel simple_statement 
+    assignment
+    type_alias
+    star_expressions
+    return_stmt
+    import_stmt
+    raise_stmt
+    pass
+    del_stmt
+    yield_stmt
+    assert_stmt
+    break
+    continue
+    global_stmt
+    nonlocal_stmt
+)
+
 (psm-atype variable (lisp symbol)) ; Определяем типы моделей лексических конструкций языка
 
 ; Определяем типы моделей лексических конструкций языка
@@ -54,8 +81,4 @@
 (psm-type set variable-assignment * (variable variable) (expression arithmetic-expresssion))
 ; оператор присваивания значения в свойство:
 (psm-type accw property-access-write * (object expression) (path (list expression)) (value expression))
-
-
-(psm-type program program * (body (list statement)))
-
 

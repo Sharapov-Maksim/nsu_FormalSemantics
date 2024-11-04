@@ -1,26 +1,18 @@
 package nsu.mmf.formalsemantics.antlr;
 
-import org.antlr.v4.runtime.Parser;
-import org.antlr.v4.runtime.TokenStream;
+import org.antlr.v4.runtime.*;
 
-public abstract class PythonParserBase extends Parser
-{
-    public PythonVersion Version = PythonVersion.Python3;
-
+public abstract class PythonParserBase extends Parser {
     protected PythonParserBase(TokenStream input) {
         super(input);
     }
 
-    protected boolean CheckVersion(int version) {
-        return Version == PythonVersion.Autodetect || version == Version.getValue();
+    // https://docs.python.org/3/reference/lexical_analysis.html#soft-keywords
+    public boolean isEqualToCurrentTokenText(String tokenText) {
+        return this.getCurrentToken().getText().equals(tokenText);
     }
 
-    protected void SetVersion(int requiredVersion) {
-        if (requiredVersion == 2) {
-            Version = PythonVersion.Python2;
-        } else if (requiredVersion == 3) {
-            Version = PythonVersion.Python3;
-        }
+    public boolean isnotEqualToCurrentTokenText(String tokenText) {
+        return !this.isEqualToCurrentTokenText(tokenText); // for compatibility with the Python 'not' logical operator
     }
 }
-

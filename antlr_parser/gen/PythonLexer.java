@@ -1,5 +1,4 @@
-// Generated from C:/projects/nsu_FormalSemantics/nsu_FormalSemantics/antlr_parser/PythonLexer.g4 by ANTLR 4.13.2
-package nsu.mmf.formalsemantics.antlr;
+// Generated from C:/projects/nsu_FormalSemantics/nsu_FormalSemantics/antlr_parser/src/main/antlr4/PythonLexer.g4 by ANTLR 4.13.2
 import org.antlr.v4.runtime.Lexer;
 import org.antlr.v4.runtime.CharStream;
 import org.antlr.v4.runtime.Token;
