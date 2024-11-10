@@ -8,6 +8,9 @@
 ) ; file_input in g4
 
 (concept-by-value identifier symbol)
+(concept-by-value int-atom (lisp int))
+(concept-by-value bool-atom (True False))
+(concept-by-union object None object-with-id)
 
 (concept-by-union statement simple_statements compound_statement)
 
@@ -46,22 +49,56 @@
 
 (concept-by-union assignment 
     simple_assignment
-    augment_assignment
+    augment_assignment  ; like '+='
 )
 
 (concept simple_assignment :constructor = :arguments
     assignment_target
     expression
 )
+
+(concept augment_assignment :constructor augassign :arguments
+    assignment_target
+    augment_operation
+    expression
+)
+(concept-by-value augment_operation (|+=|, |-=|, |*=|, |@=|, |/=|, |%=|, |&=|, ||=|, |^=|, |<<=|, |>>=|, |**=|, |//=|)) ; TODO syntax?
+
 (concept-by-union assignment_target
     variable
-    subscript_attribute_target
+    subscript_primary_by_name
+)
+
+(concept subscript_primary_by_name ; a.name, a["name"], a[idx]
+    (object subscript_primary)
+    (attr identifier) ; indexes are also names
+)
+
+(concept-by-union subscript_primary
+    subscript_primary_by_name
+    subscript_primary_method_call
+    atom
+)
+
+(concept subscript_primary_method_call :constructor subscript_method_call :arguments ; a.name(args...)
+    (object subscript_primary)
+    (method identifier)
+    :flatten (arguments (list expression))
+)
+
+(concept-by-union atom_subscriptable
+    variable
+    string
+    tuple
+    list
+    dict
 )
 
 
-
-
-
+(concept function_call :constructor function_call :arguments ; name(args...)
+    (method identifier)
+    :flatten (arguments (list expression))
+)
 
 
 
