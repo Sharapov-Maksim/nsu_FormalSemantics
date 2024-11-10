@@ -1,21 +1,20 @@
 
 ; содержимое psm для первичной модели Python на PSML
-(psm-empty)
-
-(psm-lan Python) ; Добавляем язык моделей Python-конструкций
-(psm-clan Python) ; Делаем его текущим языком
+(ontology Python) ; Добавляем язык моделей Python-конструкций
+(current-ontology Python) ; Делаем его текущим языком
 
 (model program :constructor program :arguments 
     (body (list statement)) ; list can be empty
 ) ; file_input in g4
 
+(concept-by-value identifier symbol)
 
-(umodel statement simple_statements compound_statement)
+(concept-by-union statement simple_statements compound_statement)
 
 (model simple_statements :constructor simple_stmts :arguments
     (stmts  (list simple_statement))
 )
-(umodel simple_statement 
+(concept-by-union simple_statement 
     assignment
     type_alias
     star_expressions
@@ -31,7 +30,7 @@
     global_stmt
     nonlocal_stmt
 )
-(umodel compound_statement
+(concept-by-union compound_statement
     function_def
     if_stmt
     class_def
@@ -45,19 +44,33 @@
 ;; SIMPLE STATEMENTS
 ;; =================
 
-(umodel assignment 
+(concept-by-union assignment 
     simple_assignment
     augment_assignment
 )
 
-(model simple_assignment :constructor = :arguments
+(concept simple_assignment :constructor = :arguments
     assignment_target
     expression
 )
-(umodel assignment_target
+(concept-by-union assignment_target
     variable
     subscript_attribute_target
 )
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 (psm-atype variable (lisp symbol)) ; Определяем типы моделей лексических конструкций языка
 
