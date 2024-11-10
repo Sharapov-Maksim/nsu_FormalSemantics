@@ -11,6 +11,19 @@
 (concept-by-value int-atom (lisp int))
 (concept-by-value bool-atom (True False))
 (concept-by-union object None object-with-id)
+(concept-by-union atom
+    int-atom
+    bool-atom
+    |None|
+    atom_subscriptable
+)
+(concept-by-union atom_subscriptable
+    variable
+    string
+    tuple
+    list
+    dict
+)
 
 (concept-by-union statement simple_statements compound_statement)
 
@@ -47,6 +60,7 @@
 ;; SIMPLE STATEMENTS
 ;; =================
 
+;; ASSIGNMENT
 (concept-by-union assignment 
     simple_assignment
     augment_assignment  ; like '+='
@@ -64,6 +78,31 @@
 )
 (concept-by-value augment_operation (|+=|, |-=|, |*=|, |@=|, |/=|, |%=|, |&=|, ||=|, |^=|, |<<=|, |>>=|, |**=|, |//=|)) ; TODO syntax?
 
+(concept return_statement :constructor return :arguments
+    (expr expression)
+)
+(concept raise_statement :constructor raise :arguments
+    (expr expression)
+)
+(concept global_stmt :constructor global :arguments
+    (name variable)
+)
+(concept nonlocal_stmt :constructor nonlocal :arguments
+    (name variable)
+)
+(concept yield_stmt :constructor yield)
+(concept-by-union import_stmt
+    import_name
+    import_from
+)
+(concept import_name :constructor import :arguments
+    (package :flatten (list identifier))
+)
+(concept import_from :constructor import_from :arguments
+    (package :flatten (list identifier))
+    (name identifier)
+)
+
 (concept-by-union assignment_target
     variable
     subscript_primary_by_name
@@ -77,7 +116,7 @@
 (concept-by-union subscript_primary
     subscript_primary_by_name
     subscript_primary_method_call
-    atom
+    atom_subscriptable
 )
 
 (concept subscript_primary_method_call :constructor subscript_method_call :arguments ; a.name(args...)
@@ -86,23 +125,16 @@
     :flatten (arguments (list expression))
 )
 
-(concept-by-union atom_subscriptable
-    variable
-    string
-    tuple
-    list
-    dict
-)
-
-
 (concept function_call :constructor function_call :arguments ; name(args...)
     (method identifier)
     :flatten (arguments (list expression))
 )
 
+;; COMPOUND STATEMENTS
 
-
-
+(concept block :constructor block :arguments
+    (list statement)
+)
 
 
 
