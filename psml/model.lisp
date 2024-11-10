@@ -136,22 +136,38 @@
     (list statement)
 )
 
+(concept class_def :constructor class :arguments ; TODO type params, arguments?
+    (name identifier)
+    (body block)
+)
 
+(concept function_def :constructor func :arguments ; TODO type params
+    (name identifier)
+    (args (list identifier)) ; TODO defaults?
+    (body block)
+)
 
+;(psm-utype class_member_decl * constructor_def method_def)
+;(psm-type constructor constructor_def * (args (list name)) (body (list statement)))
+;(psm-type method method_def * (name name) (args (list name)) (body (list statement)))
 
+(concept if-statement :constructor if :arguments
+    (condition boolean-expression) 
+    (then block) 
+    (:opt elif if-statement)
+    (:opt else block) ; TODO optional syntax? 
+)
 
+(concept while_statement :constructor while_stmt :arguments
+    (condition boolean-expression) 
+    (body block)
+)
 
-(psm-atype variable (lisp symbol)) ; Определяем типы моделей лексических конструкций языка
-
-; Определяем типы моделей лексических конструкций языка
-(psm-atype int * (lisp int))
-(psm-atype bool * True False)
-
-
-(psm-type class class_decl * ((name name) (body (class_member_decl))))
-(psm-utype class_member_decl * constructor_def method_def)
-(psm-type constructor constructor_def * (args (list name)) (body (list statement)))
-(psm-type method method_def * (name name) (args (list name)) (body (list statement)))
+(concept for_statement :constructor for_stmt :arguments
+    (var variable)
+    (range expression) 
+    (body block)
+)
 
 
 
@@ -183,8 +199,6 @@
 
 ; Типы моделей операторов языка
 (psm-utype statement * class_decl if-statement block-statement while-statement for-statement variable-assignment property-access-write)
-(psm-type if if-statement * (condition boolean-expression) (then statement) (opt else statement))
-(psm-type block block-statement * (flatten statement-list (list statement)))
 (psm-type while while-statement * (condition boolean-expression) (body statement))
 (psm-type for for-statement * (iterator variable) (from expression) (to expression) (body statement)) 
 (psm-type set variable-assignment * (variable variable) (expression arithmetic-expresssion))
