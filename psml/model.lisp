@@ -169,8 +169,13 @@
     (body block)
 )
 
+(concept with_statement :constructor with_stmt :arguments ; with open('file_path', 'w') as file:
+    (var variable)
+    (expr expression) 
+    (body block)
+)
 
-
+;; OLD ONTOLOGY, TODO delete:
 ; Определяем типы моделей выражений языка
 (psm-utype expression * arithmetic-expression boolean-expression)
 ; Арифметические выражения
@@ -199,9 +204,6 @@
 
 ; Типы моделей операторов языка
 (psm-utype statement * class_decl if-statement block-statement while-statement for-statement variable-assignment property-access-write)
-(psm-type while while-statement * (condition boolean-expression) (body statement))
-(psm-type for for-statement * (iterator variable) (from expression) (to expression) (body statement)) 
-(psm-type set variable-assignment * (variable variable) (expression arithmetic-expresssion))
 ; оператор присваивания значения в свойство:
 (psm-type accw property-access-write * (object expression) (path (list expression)) (value expression))
 
