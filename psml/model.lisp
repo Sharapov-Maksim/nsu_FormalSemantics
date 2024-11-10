@@ -170,8 +170,23 @@
 )
 
 (concept with_statement :constructor with_stmt :arguments ; with open('file_path', 'w') as file:
+    (items (lsit as_statement))
+    (body block)
+)
+
+(concept as_statement :constructor as_stmt :arguments
+    (val expression)
     (var variable)
-    (expr expression) 
+)
+
+(concept try_statement :constructor try_stmt :arguments
+    (body block)
+    (:opt except (list except_block))
+    (:opt finally block)
+)
+
+(concept except_block :constructor except_block :arguments
+    (:opt exception as_statement)
     (body block)
 )
 
