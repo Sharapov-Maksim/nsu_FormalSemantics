@@ -10,7 +10,6 @@
 (concept-by-value identifier symbol)
 (concept-by-value int-atom (lisp int))
 (concept-by-value bool-atom (True False))
-(concept-by-union object None object-with-id)
 (concept-by-union atom
     int-atom
     bool-atom
@@ -189,6 +188,36 @@
     (:opt exception as_statement)
     (body block)
 )
+
+
+
+;; SEMANTIC ENTITIES
+(concept module : constructor module :arguments (id nat))
+(concept-by-union object None object-with-id)
+(concept object-with-id :constructor object-with-id :arguments (id nat))
+(concept class :constructor class :arguments (id nat))
+
+
+(concept local-context :constructor local-context :arguments
+    (object-type (map object class))
+    (object-value (map object object-value))
+    (classes (map name class))
+    (class-static-field-value (map class (map name static-field-value)))
+    (class-declaration (map class class-declaration))
+    (class-interface (map class interface))
+)
+(concept-by-value object-value (map name instance-field-value))
+(concept-by-union instance-field-value int-value double-value bool-value object)
+(concept-by-union static-field-value int-value double-value bool-value object)
+
+(concept global-context :constructor global-context :arguments
+    (module (map name package))
+    (package-value package (map name package-element))
+    (object-counter nat)
+    (class-counter nat)
+)
+(concept-by-union package-element module class object)
+
 
 ;; OLD ONTOLOGY, TODO delete:
 ; Определяем типы моделей выражений языка
