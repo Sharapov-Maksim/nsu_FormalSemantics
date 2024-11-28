@@ -153,7 +153,7 @@
 (concept if-statement :constructor if :arguments
     (condition boolean-expression) 
     (then block) 
-    (:opt elif if-statement)
+    (:opt elif if-statement) ; TODO replace elif() with else { if() }
     (:opt else block) ; TODO optional syntax? 
 )
 
@@ -225,7 +225,7 @@
 (concept-by-value if-statement-handling-mode condition branch)
 
 (concept if-statement-handling :constructor if-handling :arguments
-    (instance if-statement) (mode if-statement-handling-mode))
+    (instance if-statement) (mode if-statement-handling-mode) (parameter nat))
 
 ;; (pop-handling lc gc) = (next-handling (pop (aget lc 'stack)) lc gc)
 ;; (next-handling nil lc gc nil) = nil
@@ -237,20 +237,16 @@
     ) )
 
 (transformation opsem :concept if-statement :instance i :local-context lc :global-context gc
-    (start-handling (if-handling i 'condition) lc)
+    (start-handling (if-handling i 'condition 0) lc)
     (opsem (aget i 'condition) lc gc)
 )
 (transformation opsem :concept if-then-else-statement :instance i
     :local-context lc :global-context gc :mode condition
     (start-handling (if-handling i 'branch) lc)
     (if (equal (aget lc 'value) 'true)
-    (opsem (aget i 'then) lc gc)
-    (opsem (aget i 'else) lc gc) )
+        (opsem (aget i 'then) lc gc)
+        (opsem (aget i 'else) lc gc) )
 )
-
-
-
-
 
 
 
