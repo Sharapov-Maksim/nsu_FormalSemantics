@@ -205,6 +205,7 @@
     (class-static-field-value (map class (map name static-field-value)))
     (class-declaration (map class class-declaration))
     (class-interface (map class interface))
+    (stack (list anything)) ; TODO anything?
 )
 (concept-by-value object-value (map name instance-field-value))
 (concept-by-union instance-field-value int-value double-value bool-value object)
@@ -217,6 +218,42 @@
     (class-counter nat)
 )
 (concept-by-union package-element module class object)
+
+
+;; OPERATIONAL SEMANTICS for Python
+
+(concept-by-value if-statement-handling-mode condition branch)
+
+(concept if-statement-handling :constructor if-handling :arguments
+    (instance if-statement) (mode if-statement-handling-mode))
+
+;; (pop-handling lc gc) = (next-handling (pop (aget lc 'stack)) lc gc)
+;; (next-handling nil lc gc nil) = nil
+;; (pop a) = (setq a (cdr a))
+(transformation next-handling :concept if-statement-handling :instance i :local-context lc :global-context gc :mode nil
+    (cond 
+        ((equal (aget i 'mode) 'condition) (opsem (aget i instance) lc gc 'condition))
+        (t (pop-handling lc gc)) 
+    ) )
+
+(transformation opsem :concept if-statement :instance i :local-context lc :global-context gc
+    (start-handling (if-handling i 'condition) lc)
+    (opsem (aget i 'condition) lc gc)
+)
+(transformation opsem :concept if-then-else-statement :instance i
+    :local-context lc :global-context gc :mode condition
+    (start-handling (if-handling i 'branch) lc)
+    (if (equal (aget lc 'value) 'true)
+    (opsem (aget i 'then) lc gc)
+    (opsem (aget i 'else) lc gc) )
+)
+
+
+
+
+
+
+
 
 
 ;; OLD ONTOLOGY, TODO delete:
