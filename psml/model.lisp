@@ -153,7 +153,6 @@
 (concept if-statement :constructor if :arguments
     (condition boolean-expression) 
     (then block) 
-    (:opt elif if-statement) ; TODO replace elif() with else { if() }
     (:opt else block) ; TODO optional syntax? 
 )
 
@@ -199,6 +198,7 @@
 
 
 (concept local-context :constructor local-context :arguments
+    (local-variable-value (map name value))
     (object-type (map object class))
     (object-value (map object object-value))
     (classes (map name class))
@@ -222,6 +222,36 @@
 
 ;; OPERATIONAL SEMANTICS for Python
 
+;;;; Concept `instance in state`
+(concept
+ instance-in-state
+ :constructor instance-in-state
+ :arguments
+ (instance instance)
+ (state state))
+
+(transformation opsem :concept simple_assignment -
+    (nil
+        (to-state 'expression) ; TODO where do we define states?
+        (opsem (aget i 'expression) lc gc))
+    (expression 
+        (push (aget lc 'stack) ((aget lc 'value) nil)) ; push expression result on reg
+        (to-state 'target) ; push state
+        (opsem (aget i 'assignment_target) lc gc))
+    (target
+        (setq target (aget lc 'value))
+        (if (target instanceof 'variable) ; TODO instanceof???
+            (aset lc local-variable-value target value)
+            ; else -- target is object
+            (aset lc object-value target value)
+        )
+        (go-to-state final)))
+
+
+
+
+
+;; old semantics:
 (concept-by-value if-statement-handling-mode condition branch)
 
 (concept if-statement-handling :constructor if-handling :arguments
