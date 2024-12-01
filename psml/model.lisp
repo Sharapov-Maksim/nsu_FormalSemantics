@@ -235,10 +235,31 @@
         (to-state 'expression) ; TODO where do we define states?
         (opsem (aget i 'expression) lc gc))
     (expression 
-        (push (aget lc 'stack) ((aget lc 'value) nil)) ; push expression result on reg
+        (push (aget lc 'stack) ((aget lc 'value) nil)) ; push expression result
         (to-state 'target) ; push state
         (opsem (aget i 'assignment_target) lc gc))
     (target
+        (setq target (aget lc 'value))
+        (if (target instanceof 'variable) ; TODO instanceof???
+            (aset lc local-variable-value target value)
+            ; else -- target is object
+            (aset lc object-value target value)
+        )
+        (go-to-state final)))
+
+(transformation opsem :concept augment_assignment -
+    (nil
+        (to-state 'target) ; push state
+        (opsem (aget i 'assignment_target) lc gc))
+    (target 
+        (setq targ (aget lc 'value))
+        (push (aget lc 'stack) (target nil)) ; push target on stack
+        (to-state 'expression)
+        (opsem (aget i 'expression) lc gc)
+        (setq expr_res (aget lc 'value))
+        () ; TODO: use augment operation
+    )
+    (expression
         (setq target (aget lc 'value))
         (if (target instanceof 'variable) ; TODO instanceof???
             (aset lc local-variable-value target value)
