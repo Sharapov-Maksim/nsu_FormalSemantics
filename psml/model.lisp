@@ -241,6 +241,7 @@
     (target
         (setq target (aget lc 'value))
         (if (target instanceof 'variable) ; TODO instanceof???
+            ; (is-instance instance concept)
             (aset lc local-variable-value target value)
             ; else -- target is object
             (aset lc object-value target value)
