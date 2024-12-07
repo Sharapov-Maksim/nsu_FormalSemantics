@@ -72,10 +72,11 @@
 
 (concept augment_assignment :constructor augassign :arguments
     assignment_target
-    augment_operation
+    arith-op
     expression
 )
-(concept-by-value augment_operation (|+=|, |-=|, |*=|, |@=|, |/=|, |%=|, |&=|, ||=|, |^=|, |<<=|, |>>=|, |**=|, |//=|)) ; TODO syntax?
+
+;(concept-by-value augment_operation (|+=|, |-=|, |*=|, |@=|, |/=|, |%=|, |&=|, ||=|, |^=|, |<<=|, |>>=|, |**=|, |//=|)) ; TODO syntax?
 
 (concept return_statement :constructor return :arguments
     (expr expression)
@@ -200,10 +201,10 @@
 (concept boolean-negation-expression :constructor boolean-negation-expression :arguments
     (arg expression)
 )
-(concept-by-value bool-bin-op |or| |and| |xor|)
-(concept boolean-bin-expression :constructor boolean-expression :arguments
+(concept-by-value bool-op |or| |and| |xor|)
+(concept boolean-expression :constructor boolean-expression :arguments
     (left expression)
-    (op bool-bin-op)
+    (op bool-op)
     (right expression)
 )
 (concept-by-value cmp-op |>| |<| |<=| |>=| |==| |!=|)
@@ -212,7 +213,7 @@
     (op cmp-op)
     (right expression)
 )
-(concept-by-value arith-op |+| |-| |*| |/| |**| |<<| |>>| ||| |&| |^|)
+(concept-by-value arith-op |+|, |-|, |*|, |@|, |/|, |%|, |&|, |||, |^|, |<<|, |>>|, |**|, |//|)
 (concept arith-expression :constructor arith-expression :arguments
     (left expression)
     (op arith-op)
@@ -270,35 +271,65 @@
         (setq t (aget i 'assignment_target))
         (setq val (aget lc 'value))
         (if (is-instance t variable)
-            (aset lc local-variable-value t val)
+            (progn
+                (aset lc local-variable-value t val)
+                (go-to-state final))
             (progn ; t is subscript_primary_by_name
-                (opsem (aget t 'object) lc gc) ; can we return to here after opsem?
-                (setq obj (aget lc 'value))
-                (aset lc object-value obj val)
+                (to-state object-assignment val)
+                (opsem (aget t 'object) lc gc)
             ) 
         )
-        (go-to-state final)))
+        )
+    (object-assignment val
+        (setq obj (aget lc 'value))
+        (aset lc object-value obj val)
+        (go-to-state final)
+    ))
 
+; (concept-by-value augment_operation (|+=|, |-=|, |*=|, |@=|, |/=|, |%=|, |&=|, ||=|, |^=|, |<<=|, |>>=|, |**=|, |//=|)) ; TODO syntax?
 (transformation opsem :concept augment_assignment -
     (nil
-        (to-state 'target) ; push state
-        (opsem (aget i 'assignment_target) lc gc))
-    (target 
-        (setq targ (aget lc 'value))
-        (push (aget lc 'stack) (target nil)) ; push target on stack
         (to-state 'expression)
-        (opsem (aget i 'expression) lc gc)
-        (setq expr_res (aget lc 'value))
-        () ; TODO: use augment operation
-    )
+        (opsem (aget i 'expression) lc gc))
     (expression
-        (setq target (aget lc 'value))
-        (if (target instanceof 'variable) ; TODO instanceof???
-            (aset lc local-variable-value target value)
-            ; else -- target is object
-            (aset lc object-value target value)
+        (setq t (aget i 'assignment_target))
+        (setq val (aget lc 'value))
+        (if (is-instance t variable)
+            (progn
+                (setq val2 (aget lc local-variable-value t val))
+                (to-state 'operation_eval val2 val1))
+            (progn ; t is subscript_primary_by_name
+                (to-state 'object_get val)
+                (opsem (aget t 'object) lc gc)) 
+        ))
+    (object_get val1
+        (setq obj (aget lc 'value))
+        (setq val2 (aget lc object-value obj))
+        (to-state 'operation_eval val2 val1)
+    )
+    (operation_eval left right
+        (setq op (aget i 'arith-op))
+        (aset lc 'value (arith-expr-eval op left right))
+        (go-to-state 'assignment)
+    )
+    (assignment 
+        (setq t (aget i 'assignment_target))
+        (setq val (aget lc 'value))
+        (if (is-instance t variable)
+            (progn
+                (aset lc local-variable-value t val)
+                (go-to-state final))
+            (progn ; t is subscript_primary_by_name
+                (to-state object-assignment val)
+                (opsem (aget t 'object) lc gc)
+            ) 
         )
-        (go-to-state final)))
+        )
+    (object_assignment val
+        (setq obj (aget lc 'value))
+        (aset lc object-value obj val)
+        (go-to-state final)
+    ))
 
 ;;; Expressions
 (transformation opsem :concept bool-expression -
@@ -310,7 +341,7 @@
         (opsem (aget i 'right) lc gc))
     ((arg2 v1)
         (setq v2 (aget lc 'value))
-        (setq op (aget lc 'op))
+        (setq op (aget i 'bool-op))
         (if (equal (op |or|))
             (aset lc 'value (python-or v1 v2))
             (if equal (op |and|)
@@ -359,6 +390,82 @@
         True
     )
 )
+
+; (concept-by-value cmp-op |>| |<| |<=| |>=| |==| |!=|)
+(transformation opsem :concept comparison-expression -
+    (nil 
+        (to-state 'arg1)
+        (opsem (aget i 'left) lc gc))
+    (arg1
+        (to-state 'arg2 (aget lc 'value))
+        (opsem (aget i 'right) lc gc))
+    ((arg2 v1)
+        (setq v2 (aget lc 'value))
+        (setq op (aget i 'op))
+        (if (equal (op |>|))
+            (aset lc 'value (> v1 v2))
+            (if (equal (op |<|))
+                (aset lc 'value (< v1 v2))
+                (if (equal (op |<=|))
+                    (aset lc 'value (<= v1 v2))
+                    (if (equal (op |>=|))
+                        (aset lc 'value (>= v1 v2))
+                        (if (equal (op |==|))
+                            (aset lc 'value (equal v1 v2))
+                            (if (equal (op |!=|))
+                                (aset lc 'value (not (equal v1 v2)))
+                                (aset lc 'value nil)
+        ))))))
+        (go-to-state final)))
+
+(transformation opsem :concept arith-expression -
+    (nil 
+        (to-state 'arg1)
+        (opsem (aget i 'left) lc gc))
+    (arg1
+        (to-state 'arg2 (aget lc 'value))
+        (opsem (aget i 'right) lc gc))
+    ((arg2 v1)
+        (setq v2 (aget lc 'value))
+        (setq op (aget i 'op))
+        (aset lc 'value (arith-expr-eval op v1 v2))
+        (go-to-state final)
+    ))
+
+; (concept-by-value arith-op |+|, |-|, |*|, |@|, |/|, |%|, |&|, |||, |^|, |<<|, |>>|, |**|, |//|)
+(transformation
+    arith-expr-eval
+    :arguments op left right
+    :concept nil
+    :instance nil
+    :local-context lc
+    :global-context gc
+    (prog
+        (if (equal (op |+|))
+            (return (+ left right))
+            (if (equal (op |-|))
+                (return (- left right))
+                (if (equal (op |*|))
+                    (return (* left right))
+                    (if (equal (op |/|))
+                        (return (/ left right))
+                        (if (equal (op |**|))
+                            (return (expt left right))
+                            (if (equal (op |<<|))
+                                (return (ash left right))
+                                (if (equal (op |>>|))
+                                    (return (ash left (- right)))
+                                    (if (equal (op |||))
+                                        (return (bit-or left right))
+                                        (if (equal (op |&|))
+                                            (return (bit-and left right))
+                                            (if (equal (op |^|))
+                                                (return (bit-xor left right))
+                                                (if (equal (op |%|))
+                                                    (return (mod left right))
+                                                    (return nil) ; other are unsupported for now                             
+        )))))))))))
+    ))
 
 
 ;; old semantics:
