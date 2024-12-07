@@ -188,6 +188,37 @@
     (body block)
 )
 
+(concept-by-union expression
+    atom
+    subscript_primary
+    boolean-expression
+    boolean-negation-expression
+    comparison-expression
+    arith-expression
+)
+
+(concept boolean-negation-expression :constructor boolean-negation-expression :arguments
+    (arg expression)
+)
+(concept-by-value bool-bin-op |or| |and| |xor|)
+(concept boolean-bin-expression :constructor boolean-expression :arguments
+    (left expression)
+    (op bool-bin-op)
+    (right expression)
+)
+(concept-by-value cmp-op |>| |<| |<=| |>=| |==| |!=|)
+(concept comparison-expression :constructor comparison-expression :arguments
+    (left expression)
+    (op cmp-op)
+    (right expression)
+)
+(concept-by-value arith-op |+| |-| |*| |/| |**| |<<| |>>| ||| |&| |^|)
+(concept arith-expression :constructor arith-expression :arguments
+    (left expression)
+    (op arith-op)
+    (right expression)
+)
+
 
 
 ;; SEMANTIC ENTITIES
@@ -230,6 +261,7 @@
  (instance instance)
  (state state))
 
+;;; Assignments
 (transformation opsem :concept simple_assignment -
     (nil
         (to-state 'expression)
@@ -268,8 +300,65 @@
         )
         (go-to-state final)))
 
+;;; Expressions
+(transformation opsem :concept bool-expression -
+    (nil 
+        (to-state 'arg1)
+        (opsem (aget i 'left) lc gc))
+    (arg1
+        (to-state 'arg2 (aget lc 'value))
+        (opsem (aget i 'right) lc gc))
+    ((arg2 v1)
+        (setq v2 (aget lc 'value))
+        (setq op (aget lc 'op))
+        (if (equal (op |or|))
+            (aset lc 'value (python-or v1 v2))
+            (if equal (op |and|)
+                (aset lc 'value (python-and v1 v2))
+                (aset lc 'value (python-xor v1 v2))
+            )
+        )
+        (go-to-state final)))
 
+(transformation opsem :concept bool-negation-expression -
+    (nil 
+        (to-state 'arg)
+        (opsem (aget i 'left) lc gc))
+    ((arg)
+        (setq ar (aget lc 'value))
+        (aset lc 'value (python-not ar))
+        (go-to-state final)))
 
+(defun python-or (a b)
+    (if (equal a True)
+        True
+        (if (equal b True)
+            True
+            False
+        )    
+    )
+)
+(defun python-and (a b)
+    (if (equal a False)
+        False
+        (if (equal b False)
+            False
+            True
+        )    
+    )
+)
+(defun python-xor (a b)
+    (if (equal a b)
+        False
+        True
+    )
+)
+(defun python-not (a)
+    (if (equal a True)
+        False
+        True
+    )
+)
 
 
 ;; old semantics:
