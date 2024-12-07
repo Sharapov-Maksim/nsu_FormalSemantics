@@ -232,19 +232,18 @@
 
 (transformation opsem :concept simple_assignment -
     (nil
-        (to-state 'expression) ; TODO where do we define states?
+        (to-state 'expression)
         (opsem (aget i 'expression) lc gc))
     (expression 
-        (push (aget lc 'stack) ((aget lc 'value) nil)) ; push expression result
-        (to-state 'target) ; push state
-        (opsem (aget i 'assignment_target) lc gc))
-    (target
-        (setq target (aget lc 'value))
-        (if (target instanceof 'variable) ; TODO instanceof???
-            ; (is-instance instance concept)
-            (aset lc local-variable-value target value)
-            ; else -- target is object
-            (aset lc object-value target value)
+        (setq t (aget i 'assignment_target))
+        (setq val (aget lc 'value))
+        (if (is-instance t variable)
+            (aset lc local-variable-value t val)
+            (progn ; t is subscript_primary_by_name
+                (opsem (aget t 'object) lc gc) ; can we return to here after opsem?
+                (setq obj (aget lc 'value))
+                (aset lc object-value obj val)
+            ) 
         )
         (go-to-state final)))
 
