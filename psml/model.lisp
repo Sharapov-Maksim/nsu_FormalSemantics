@@ -135,7 +135,7 @@
 ;; COMPOUND STATEMENTS
 
 (concept block :constructor block :arguments
-    (list statement)
+    (statements (list statement))
 )
 
 (concept class_def :constructor class :arguments ; TODO type params, arguments?
@@ -331,6 +331,15 @@
         (go-to-state final)
     ))
 
+(transformation opsem :model block -
+    (nil
+       (goto-to-state element 0 (length (aget i 'statements))))
+    ((element j n)
+        (if (< j n)
+            (progn (set-to 'element (+ j 1) n)
+            (opsem (aget i 'statements j) lc gc))
+            (go-to-state final))))
+
 (transformation opsem :concept break_stmt -
  (nil
   (go-to-state
@@ -360,9 +369,34 @@
 ;; TODO return_statement, raise_statement, global_stmt, nonlocal_stmt, yield_stmt, 
 ;; TODO import_name, import_from, subscript_primary_method_call, function_call
 
-;; Complex statements
+;; COMPOUND STATEMENTS
 
+(transformation opsem :concept if-statement -
+    (nil
+        (to-state 'condition)
+        (opsem (aget i 'condition) lc gc))
+    (condition
+        (if (equal (aget-d lc 'value) true)
+            (opsem (aget i 'then) lc gc)
+            (if (equals (aget i 'else) nil) ; else block is optional 
+                (go-to-state final) 
+                (opsem (aget i 'else) lc gc)))))
 
+(transformation opsem :concept while_stmt -
+    (nil
+        (to-state 'condition)
+        (opsem (aget i 'condition) lc gc))
+    (condition
+        (if (equal (aget-d lc 'value) true)
+            (progn
+                (to-state 'body)
+                (opsem (aget i 'body) lc gc))
+            (go-to-state final)))
+    (body
+        (to-state 'condition)
+        (opsem (aget i 'condition) lc gc)))
+
+;; TODO for_stmt, with_statement, 
 
 
 ;;; Expressions
