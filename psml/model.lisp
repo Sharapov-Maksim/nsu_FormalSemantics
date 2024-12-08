@@ -91,6 +91,8 @@
     (name variable)
 )
 (concept yield_stmt :constructor yield)
+(concept break_stmt :constructor break)
+(concept continue_stmt :constructor continue)
 (concept-by-union import_stmt
     import_name
     import_from
@@ -252,16 +254,14 @@
 (concept-by-union package-element module class object)
 
 
-;; OPERATIONAL SEMANTICS for Python
+; OPERATIONAL SEMANTICS for Python
 
 ;;;; Concept `instance in state`
-(concept
- instance-in-state
- :constructor instance-in-state
- :arguments
- (instance instance)
- (state state))
+(concept instance-in-state
+    :constructor instance-in-state
+    :arguments (instance instance) (state state))
 
+;; Simple statements
 ;;; Assignments
 (transformation opsem :concept simple_assignment -
     (nil
@@ -330,6 +330,40 @@
         (aset lc object-value obj val)
         (go-to-state final)
     ))
+
+(transformation opsem :concept break_stmt -
+ (nil
+  (go-to-state
+   propagation
+   (next-instance lc)))
+ ((propagation j)
+  (if (or
+       (is-instance-of j 'match_stmt)
+       (is-instance-of j 'while_stmt)
+       (is-instance-of j 'for_stmt))
+      (go-to-state final)
+      (go-to-state
+       propagation
+       (next-instance lc)))))
+
+(transformation opsem :concept continue_stmt -
+    (nil
+        (go-to-state propagation (next-instance lc)))
+    ((propagation j)
+        (if (or (is-instance-of j 'while_stmt) (is-instance-of j 'for_stmt))
+            (progn
+                (go-to-state final)
+                (opsem j) ; TODO validate when opsem for loops finished
+            )
+            (go-to-state propagation (next-instance lc)))))
+
+;; TODO return_statement, raise_statement, global_stmt, nonlocal_stmt, yield_stmt, 
+;; TODO import_name, import_from, subscript_primary_method_call, function_call
+
+;; Complex statements
+
+
+
 
 ;;; Expressions
 (transformation opsem :concept bool-expression -
@@ -494,40 +528,4 @@
         (opsem (aget i 'then) lc gc)
         (opsem (aget i 'else) lc gc) )
 )
-
-
-
-
-
-;; OLD ONTOLOGY, TODO delete:
-; Определяем типы моделей выражений языка
-(psm-utype expression * arithmetic-expression boolean-expression)
-; Арифметические выражения
-(psm-utype arithmetic-expression * +expression -expression *expression /expression variable property-access-read)
-(psm-type + +expression * (left arithmetic-expression) (right arithmetic-expression))
-(psm-type - -expression * (left arithmetic-expression) (right arithmetic-expression))
-(psm-type * *expression * (left arithmetic-expression) (right arithmetic-expression))
-(psm-type / /expression * (left arithmetic-expression) (right arithmetic-expression))
-; Булевские выражения
-(psm-utype boolean-expression * not-expression and-expression or-expression equality inequality arithmetic-relation)
-(psm-type not not-expression * (arg boolean-expression))
-(psm-type and and-expression * (args (list boolean-expression)))
-(psm-type or or-expression * (list args boolean-expression))
-(psm-utype arithmetic-relation * <relation >relation <=relation >=relation !=relation)
-(psm-type < <relation * (left arithmetic-expression) (right arithmetic-expression))
-(psm-type > >relation * (left arithmetic-expression) (right arithmetic-expression))
-(psm-type <= <=relation * (left arithmetic-expression) (right arithmetic-expression))
-(psm-type >= >=relation * (left arithmetic-expression) (right arithmetic-expression))
-(psm-type = equality * (left expression) (right expression))
-(psm-type != inequality * (left expression) (right expression))
-; выражение чтения из свойства:
-(psm-type accr property-access-read * (object expression) (path (list expression)))
-; вызов метода
-(psm-type accw property-access-call * (object property-access-read) (args (list expression)))
-
-
-; Типы моделей операторов языка
-(psm-utype statement * class_decl if-statement block-statement while-statement for-statement variable-assignment property-access-write)
-; оператор присваивания значения в свойство:
-(psm-type accw property-access-write * (object expression) (path (list expression)) (value expression))
 
