@@ -239,7 +239,6 @@
     (class-static-field-value (map class (map name static-field-value)))
     (class-declaration (map class class-declaration))
     (class-interface (map class interface))
-    (stack (list anything)) ; TODO anything?
 )
 (concept-by-value object-value (map name instance-field-value))
 (concept-by-union instance-field-value int-value double-value bool-value object)
@@ -396,7 +395,7 @@
         (to-state 'condition)
         (opsem (aget i 'condition) lc gc)))
 
-;; TODO for_stmt, with_statement, 
+;; TODO for_stmt, with_statement
 
 
 ;;; Expressions
@@ -515,7 +514,7 @@
                 (return (- left right))
                 (if (equal (op |*|))
                     (return (* left right))
-                    (if (equal (op |/|))
+                    (if (equal (op |/|)) ; TODO division by zero
                         (return (/ left right))
                         (if (equal (op |**|))
                             (return (expt left right))
@@ -535,6 +534,7 @@
         )))))))))))
     ))
 
+; TODO add type checks, forbid (1 + true)
 
 ;; old semantics:
 (concept-by-value if-statement-handling-mode condition branch)
