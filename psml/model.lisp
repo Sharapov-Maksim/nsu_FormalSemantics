@@ -149,10 +149,6 @@
     (body block)
 )
 
-;(psm-utype class_member_decl * constructor_def method_def)
-;(psm-type constructor constructor_def * (args (list name)) (body (list statement)))
-;(psm-type method method_def * (name name) (args (list name)) (body (list statement)))
-
 (concept if-statement :constructor if :arguments
     (condition boolean-expression) 
     (then block) 
@@ -215,7 +211,7 @@
     (op cmp-op)
     (right expression)
 )
-(concept-by-value arith-op |+|, |-|, |*|, |@|, |/|, |%|, |&|, |||, |^|, |<<|, |>>|, |**|, |//|)
+(concept-by-value arith-op |+| |-| |*| |@| |/| |%| |&| ||| |^| |<<| |>>| |**| |//|)
 (concept arith-expression :constructor arith-expression :arguments
     (left expression)
     (op arith-op)
@@ -228,11 +224,14 @@
 (concept module : constructor module :arguments (id nat))
 (concept-by-union object None object-with-id)
 (concept object-with-id :constructor object-with-id :arguments (id nat))
+(concept-by-union type class builtin_type)
+(concept-by-value builtin_type bool str int float complex)
 (concept class :constructor class :arguments (id nat))
 
 
 (concept local-context :constructor local-context :arguments
     (local-variable-value (map name value))
+    (local-variable-type (map name type))
     (object-type (map object class))
     (object-value (map object object-value))
     (classes (map name class))
@@ -321,9 +320,9 @@
             (progn ; t is subscript_primary_by_name
                 (to-state object-assignment val)
                 (opsem (aget t 'object) lc gc)
-            ) 
+            )
         )
-        )
+    )
     (object_assignment val
         (setq obj (aget lc 'value))
         (aset lc object-value obj val)
@@ -359,7 +358,7 @@
         (if (is-instance-of j 'while_stmt)
             (opsem j 'condition) ; TODO validate when opsem for loops finished
             (if (is-instance-of j 'for_stmt)
-                () ; TODO support for loops, it requires iterators opsem
+                (fatal_error "Operation \"continue\" in for-loop is unsupported") ; TODO support for loops, it requires iterators opsem
                 (go-to-state propagation (next-instance lc))
             )
         )
@@ -508,6 +507,9 @@
     :local-context lc
     :global-context gc
     (prog
+        ; TODO obtain types of left and right
+        ; if bool, convert them to int, otherwise - fatal
+        
         (if (equal (op |+|))
             (return (+ left right))
             (if (equal (op |-|))
@@ -515,7 +517,9 @@
                 (if (equal (op |*|))
                     (return (* left right))
                     (if (equal (op |/|)) ; TODO division by zero
-                        (return (/ left right))
+                        (if (equal right 0)
+                            (fatal_error "Division by zero")
+                            (return (/ left right)))
                         (if (equal (op |**|))
                             (return (expt left right))
                             (if (equal (op |<<|))
@@ -534,6 +538,24 @@
         )))))))))))
     ))
 
+(transformation
+    fatal_error
+    :arguments x
+    :concept nil
+    :instance nil
+    :local-context lc
+    :global-context gc
+    bool2int
+    (if (equal x True)
+        (return 1)
+        (if (equal x False)
+            (return 0)
+            (fatal_error "bool2int: converting non-boolean value")
+        )
+    )
+)
+
+
 (transformation opsem :concept function_call -
     (nil 
         (goto-to-state argument-evaluation 0
@@ -548,6 +570,26 @@
             (go-to-state 'call argval)))
     (call
         (apply-lambda (find-static-method (aget i 'name) n) argval)))
+
+(transformation
+    fatal_error
+    :arguments msg
+    :concept nil
+    :instance nil
+    :local-context lc
+    :global-context gc
+    (nil
+        (go-to-state propagation (next-instance lc)))
+    ((propagation j)
+        (if (equal j nil)
+            (progn
+                (print ("Fatal error: "))
+                (write msg)
+            )
+            (go-to-state propagation (next-instance lc))
+        )
+    )
+)
 
 ; TODO add type checks, forbid (1 + true)
 
