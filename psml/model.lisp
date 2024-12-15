@@ -123,12 +123,12 @@
 
 (concept subscript_primary_method_call :constructor subscript_method_call :arguments ; a.name(args...)
     (object subscript_primary)
-    (method identifier)
+    (name identifier)
     :flatten (arguments (list expression))
 )
 
 (concept function_call :constructor function_call :arguments ; name(args...)
-    (method identifier)
+    (name identifier)
     :flatten (arguments (list expression))
 )
 
@@ -340,30 +340,30 @@
             (go-to-state final))))
 
 (transformation opsem :concept break_stmt -
- (nil
-  (go-to-state
-   propagation
-   (next-instance lc)))
- ((propagation j)
-  (if (or
-       (is-instance-of j 'match_stmt)
-       (is-instance-of j 'while_stmt)
-       (is-instance-of j 'for_stmt))
-      (go-to-state final)
-      (go-to-state
-       propagation
-       (next-instance lc)))))
+    (nil
+        (go-to-state propagation (next-instance lc)))
+    ((propagation j)
+        (if (or
+                (is-instance-of j 'match_stmt)
+                (is-instance-of j 'while_stmt)
+                (is-instance-of j 'for_stmt))
+            (go-to-state final)
+            (go-to-state propagation (next-instance lc))
+        )
+    ))
 
 (transformation opsem :concept continue_stmt -
     (nil
         (go-to-state propagation (next-instance lc)))
     ((propagation j)
-        (if (or (is-instance-of j 'while_stmt) (is-instance-of j 'for_stmt))
-            (progn
-                (go-to-state final)
-                (opsem j) ; TODO validate when opsem for loops finished
+        (if (is-instance-of j 'while_stmt)
+            (opsem j 'condition) ; TODO validate when opsem for loops finished
+            (if (is-instance-of j 'for_stmt)
+                () ; TODO support for loops, it requires iterators opsem
+                (go-to-state propagation (next-instance lc))
             )
-            (go-to-state propagation (next-instance lc)))))
+        )
+    ))
 
 ;; TODO return_statement, raise_statement, global_stmt, nonlocal_stmt, yield_stmt, 
 ;; TODO import_name, import_from, subscript_primary_method_call, function_call
@@ -534,32 +534,20 @@
         )))))))))))
     ))
 
+(transformation opsem :concept function_call -
+    (nil 
+        (goto-to-state argument-evaluation 0
+            (length (aget i 'arguments)) nil))
+    ((argument-evaluation j n argval)
+        (if
+            (not (equal argval nil))
+            (rcons (aget lc 'value) argval))
+        (if (< j n)
+            (progn (set-to 'element (+ j 1) n)
+                (opsem (aget i 'arguments j) lc gc))
+            (go-to-state 'call argval)))
+    (call
+        (apply-lambda (find-static-method (aget i 'name) n) argval)))
+
 ; TODO add type checks, forbid (1 + true)
-
-;; old semantics:
-(concept-by-value if-statement-handling-mode condition branch)
-
-(concept if-statement-handling :constructor if-handling :arguments
-    (instance if-statement) (mode if-statement-handling-mode) (parameter nat))
-
-;; (pop-handling lc gc) = (next-handling (pop (aget lc 'stack)) lc gc)
-;; (next-handling nil lc gc nil) = nil
-;; (pop a) = (setq a (cdr a))
-(transformation next-handling :concept if-statement-handling :instance i :local-context lc :global-context gc :mode nil
-    (cond 
-        ((equal (aget i 'mode) 'condition) (opsem (aget i instance) lc gc 'condition))
-        (t (pop-handling lc gc)) 
-    ) )
-
-(transformation opsem :concept if-statement :instance i :local-context lc :global-context gc
-    (start-handling (if-handling i 'condition 0) lc)
-    (opsem (aget i 'condition) lc gc)
-)
-(transformation opsem :concept if-then-else-statement :instance i
-    :local-context lc :global-context gc :mode condition
-    (start-handling (if-handling i 'branch) lc)
-    (if (equal (aget lc 'value) 'true)
-        (opsem (aget i 'then) lc gc)
-        (opsem (aget i 'else) lc gc) )
-)
 
