@@ -509,7 +509,7 @@
     (prog
         ; TODO obtain types of left and right
         ; if bool, convert them to int, otherwise - fatal
-        
+
         (if (equal (op |+|))
             (return (+ left right))
             (if (equal (op |-|))
@@ -539,13 +539,12 @@
     ))
 
 (transformation
-    fatal_error
+    bool2int
     :arguments x
     :concept nil
     :instance nil
     :local-context lc
     :global-context gc
-    bool2int
     (if (equal x True)
         (return 1)
         (if (equal x False)
